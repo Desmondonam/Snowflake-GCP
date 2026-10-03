@@ -1,0 +1,5 @@
+transaction_id,line_no,store_id,sku,qty,unit_price,discount,loyalty_id,sold_at,promo_code,tender_type
+T-S002-20261001-00001,1,S002,SKU-00001,1,2.00,0.00,,2026-10-01 08:00:00,,CASH
+T-S002-20261001-00001,2,S002,SKU-00002,abc,2.00,0.00,,2026-10-01 08:00:01,,CASH
+T-S002-20261001-00002,1,S002,SKU-00003,1,2.00,0.00,,not-a-date,,CASH
+T-S002-20261001-00003,1,S002,SKU-00004,1,2.00,0.00,,2026-10-01 08:10:00,,CASH

@@ -1,0 +1,73 @@
+/* =============================================================================
+   CAPSTONE 2 (part 2) — Bulk backfill with COPY INTO (no Snowpipe)
+   -----------------------------------------------------------------------------
+   WHEN TO USE THIS FILE
+     * Files were uploaded BEFORE the pipes existed and are older than 7 days
+       (ALTER PIPE … REFRESH only looks back 7 days).
+     * You rebuilt RAW from scratch (e.g. terraform destroy/apply in the final capstone).
+     * A big historical load where you want a warehouse you control (size, timing, cost).
+
+   WARNING: bulk COPY and Snowpipe keep SEPARATE load histories. Running this on
+   files a pipe already loaded creates duplicates. Safe uses: empty tables, or a
+   date range you know the pipes never saw (use the PATTERN line). Staging dedupes
+   anyway, but don't rely on that by habit.
+
+   HOW TO RUN: snow sql -c retail_engineer -f stage_02_ingestion/capstone_02_backfill_copy.sql
+   Tip: for big backfills, temporarily: ALTER WAREHOUSE LOAD_WH SET WAREHOUSE_SIZE = SMALL;
+   ============================================================================= */
+USE ROLE RETAIL_ENGINEER;
+USE WAREHOUSE LOAD_WH;
+ALTER SESSION SET QUERY_TAG = 'backfill_raw';
+
+-- Restrict to a date range by editing this pattern, e.g. '.*dt=2026-08-.*[.]csv'
+-- (each COPY below has its own PATTERN with the right extension)
+
+COPY INTO RETAIL_RAW.POS.SALES_LINES
+FROM (SELECT $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP()
+      FROM @RETAIL_RAW.COMMON.LANDING/pos_sales/)
+FILE_FORMAT = (FORMAT_NAME = 'RETAIL_RAW.COMMON.FF_CSV') PATTERN = '.*[.]csv' ON_ERROR = 'SKIP_FILE';
+
+COPY INTO RETAIL_RAW.POS.CONTROL_TOTALS
+FROM (SELECT $1,$2,$3,$4,$5,$6,$7, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP()
+      FROM @RETAIL_RAW.COMMON.LANDING/pos_control/)
+FILE_FORMAT = (FORMAT_NAME = 'RETAIL_RAW.COMMON.FF_CSV') PATTERN = '.*[.]csv' ON_ERROR = 'SKIP_FILE';
+
+COPY INTO RETAIL_RAW.ECOM.ORDERS
+FROM @RETAIL_RAW.COMMON.LANDING/ecom_orders/
+FILE_FORMAT = (FORMAT_NAME = 'RETAIL_RAW.COMMON.FF_PARQUET')
+MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE
+INCLUDE_METADATA = (_file_name = METADATA$FILENAME, _file_row_number = METADATA$FILE_ROW_NUMBER, _loaded_at = METADATA$START_SCAN_TIME)
+PATTERN = '.*[.]parquet' ON_ERROR = 'SKIP_FILE';
+
+COPY INTO RETAIL_RAW.ECOM.REVIEWS
+FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP() FROM @RETAIL_RAW.COMMON.LANDING/reviews/)
+FILE_FORMAT = (FORMAT_NAME = 'RETAIL_RAW.COMMON.FF_JSON') PATTERN = '.*[.]json' ON_ERROR = 'SKIP_FILE';
+
+COPY INTO RETAIL_RAW.CRM.CUSTOMERS
+FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP() FROM @RETAIL_RAW.COMMON.LANDING/crm_customers/)
+FILE_FORMAT = (FORMAT_NAME = 'RETAIL_RAW.COMMON.FF_JSON') PATTERN = '.*[.]json' ON_ERROR = 'SKIP_FILE';
+
+COPY INTO RETAIL_RAW.ADS.AD_PERFORMANCE
+FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP() FROM @RETAIL_RAW.COMMON.LANDING/ads/)
+FILE_FORMAT = (FORMAT_NAME = 'RETAIL_RAW.COMMON.FF_JSON') PATTERN = '.*[.]json' ON_ERROR = 'SKIP_FILE';
+
+COPY INTO RETAIL_RAW.WEB.EVENTS
+FROM (SELECT $1, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP() FROM @RETAIL_RAW.COMMON.LANDING/web_events/)
+FILE_FORMAT = (FORMAT_NAME = 'RETAIL_RAW.COMMON.FF_JSON') PATTERN = '.*[.]json' ON_ERROR = 'SKIP_FILE';
+
+COPY INTO RETAIL_RAW.ERP.PRODUCTS
+FROM (SELECT $1,$2,$3,$4,$5,$6,$7,$8, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP()
+      FROM @RETAIL_RAW.COMMON.LANDING/erp_products/)
+FILE_FORMAT = (FORMAT_NAME = 'RETAIL_RAW.COMMON.FF_CSV') PATTERN = '.*[.]csv' ON_ERROR = 'SKIP_FILE';
+
+COPY INTO RETAIL_RAW.ERP.STORES
+FROM (SELECT $1,$2,$3,$4,$5,$6,$7,$8, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP()
+      FROM @RETAIL_RAW.COMMON.LANDING/erp_stores/)
+FILE_FORMAT = (FORMAT_NAME = 'RETAIL_RAW.COMMON.FF_CSV') PATTERN = '.*[.]csv' ON_ERROR = 'SKIP_FILE';
+
+COPY INTO RETAIL_RAW.ERP.INVENTORY
+FROM (SELECT $1,$2,$3,$4, METADATA$FILENAME, METADATA$FILE_ROW_NUMBER, CURRENT_TIMESTAMP()
+      FROM @RETAIL_RAW.COMMON.LANDING/erp_inventory/)
+FILE_FORMAT = (FORMAT_NAME = 'RETAIL_RAW.COMMON.FF_CSV') PATTERN = '.*[.]csv' ON_ERROR = 'SKIP_FILE';
+
+ALTER SESSION UNSET QUERY_TAG;

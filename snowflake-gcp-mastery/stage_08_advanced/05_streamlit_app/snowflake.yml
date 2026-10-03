@@ -1,0 +1,16 @@
+# Snowflake CLI project definition for `snow streamlit deploy`.
+# From this folder:  snow streamlit deploy --replace -c retail_engineer
+definition_version: 2
+entities:
+  store_manager_app:
+    type: streamlit
+    identifier:
+      name: STORE_MANAGER_APP
+      database: RETAIL_MARTS
+      schema: APPS
+    title: "RetailOne store manager"
+    query_warehouse: BI_WH
+    main_file: streamlit_app.py
+    artifacts:
+      - streamlit_app.py
+      - environment.yml

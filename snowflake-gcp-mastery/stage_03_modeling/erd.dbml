@@ -1,0 +1,113 @@
+// RetailOne star schema — paste into https://dbdiagram.io to draw the ERD.
+// Export the image to stage_03_modeling/erd.png and link it from the README.
+
+Table dim_date {
+  date_key int [pk]
+  date_day date
+  year int
+  month int
+  iso_week int
+  is_weekend_ke boolean
+  is_weekend_qa boolean
+}
+
+Table dim_store {
+  store_sk varchar [pk]
+  store_id varchar [note: 'natural key; ONLINE for the web shop']
+  store_name varchar
+  city varchar
+  region varchar [note: 'KE / QA — drives row access policy']
+  store_type varchar
+}
+
+Table dim_product {
+  product_sk varchar [pk, note: 'MD5(sku|valid_from)']
+  sku varchar
+  product_name varchar
+  category varchar
+  brand varchar
+  unit_cost number
+  list_price number
+  valid_from timestamp
+  valid_to timestamp
+  is_current boolean
+  Note: 'SCD Type 2'
+}
+
+Table dim_customer {
+  customer_sk varchar [pk, note: 'MD5(customer_id|valid_from)']
+  customer_id varchar
+  loyalty_id varchar
+  email varchar [note: 'PII, masked']
+  phone varchar [note: 'PII, masked']
+  segment varchar
+  loyalty_tier varchar
+  city varchar
+  valid_from timestamp
+  valid_to timestamp
+  is_current boolean
+  Note: 'SCD Type 2 on segment/tier/city; contact details Type 1'
+}
+
+Table dim_promotion {
+  promotion_sk varchar [pk]
+  promo_code varchar
+  discount_pct number
+}
+
+Table dim_campaign {
+  campaign_sk varchar [pk]
+  campaign_id varchar
+  campaign_name varchar
+  platform varchar
+  channel_code varchar
+}
+
+Table dim_channel {
+  channel_sk varchar [pk]
+  channel_code varchar
+  channel_group varchar
+  is_paid boolean
+}
+
+Table fct_sales_line {
+  sales_line_key varchar [pk]
+  channel varchar
+  transaction_id varchar [note: 'degenerate dimension']
+  line_no int
+  date_key int [ref: > dim_date.date_key]
+  store_sk varchar [ref: > dim_store.store_sk]
+  product_sk varchar [ref: > dim_product.product_sk]
+  customer_sk varchar [ref: > dim_customer.customer_sk]
+  promotion_sk varchar [ref: > dim_promotion.promotion_sk]
+  store_region varchar
+  quantity number
+  gross_amount number
+  discount_amount number
+  net_amount number
+  cost_amount number
+  margin_amount number
+  is_return boolean
+}
+
+Table fct_inventory_daily {
+  inventory_key varchar [pk]
+  date_key int [ref: > dim_date.date_key]
+  store_sk varchar [ref: > dim_store.store_sk]
+  product_sk varchar [ref: > dim_product.product_sk]
+  opening_qty number
+  units_sold number
+  closing_qty number [note: 'semi-additive']
+}
+
+Table fct_ad_performance {
+  ad_performance_key varchar [pk]
+  date_key int [ref: > dim_date.date_key]
+  campaign_sk varchar [ref: > dim_campaign.campaign_sk]
+  channel_sk varchar [ref: > dim_channel.channel_sk]
+  ad_id varchar
+  spend number
+  impressions int
+  clicks int
+  conversions int
+}
