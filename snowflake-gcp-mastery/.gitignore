@@ -1,0 +1,48 @@
+# Secrets — never commit
+.env
+*.env
+!.env.example
+*.p8
+*.pem
+*.pub
+keys/
+terraform.tfvars
+*.tfvars
+!*.tfvars.example
+config.toml
+connections.toml
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Generated data
+output/
+output_*/
+capstone_retail_platform/data_generator/output/
+
+# dbt
+target/
+dbt_packages/
+logs/
+.user.yml
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+crash.log
+
+# Airflow / Astro
+capstone_retail_platform/airflow/.astro/
+capstone_retail_platform/airflow/include/keys/
+airflow_settings.yaml
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/*.local.json

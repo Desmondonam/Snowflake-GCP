@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "snowflake.snowflake-vsc",
+    "innoverio.vscode-dbt-power-user",
+    "ms-python.python",
+    "hashicorp.terraform",
+    "ms-azuretools.vscode-docker",
+    "mechatroner.rainbow-csv",
+    "bierner.markdown-mermaid"
+  ]
+}

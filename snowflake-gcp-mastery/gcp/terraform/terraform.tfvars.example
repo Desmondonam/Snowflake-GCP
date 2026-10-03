@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars (git-ignored) and edit.
+project_id = "YOUR_PROJECT_ID"
+region     = "us-central1"
+
+# First apply: keep the sample image. After `gcloud builds submit`, switch to your own:
+# ads_image = "us-central1-docker.pkg.dev/YOUR_PROJECT_ID/retail/ads-extract:latest"

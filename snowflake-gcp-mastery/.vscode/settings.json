@@ -1,0 +1,21 @@
+{
+  // Treat .sql files as Snowflake SQL (Snowflake extension) and dbt files as Jinja SQL (dbt Power User),
+  // so a T-SQL / SQL Server linter doesn't flag valid Snowflake syntax as errors.
+  "files.associations": {
+    "**/dbt_retail/**/*.sql": "jinja-sql",
+    "**/dbt_retail/**/*.yml": "jinja-yaml",
+    "*.sql": "snowflake-sql"
+  },
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.terminal.activateEnvironment": true,
+  "dbt.dbtProjectRoot": "capstone_retail_platform/dbt_retail",
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/dbt_packages": true,
+    "**/target": true,
+    "**/.terraform": true
+  },
+  "editor.rulers": [120],
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true
+}

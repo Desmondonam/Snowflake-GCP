@@ -1,0 +1,29 @@
+# One Python environment for the whole course (Python 3.11 recommended).
+# Install:  python -m pip install -r requirements.txt
+#
+# Airflow is NOT installed here: it runs in Docker (see capstone_retail_platform/airflow).
+# The Snowflake CLI is installed separately with pipx (see 00_setup/README.md).
+
+# Snowflake
+snowflake-connector-python>=3.12
+snowflake-snowpark-python>=1.25
+cryptography>=42
+
+# dbt
+dbt-core>=1.10.5,<2.0
+dbt-snowflake>=1.10,<2.0
+
+# GCP
+google-cloud-storage>=2.18
+google-cloud-pubsub>=2.25
+google-cloud-bigquery>=3.25
+
+# Data generator + utilities
+faker>=30
+pandas>=2.2
+pyarrow>=17
+python-dotenv>=1.0
+requests>=2.32
+
+# Stage 8 (local preview of the Streamlit app; optional)
+streamlit>=1.39
