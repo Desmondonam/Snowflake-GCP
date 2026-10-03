@@ -14,7 +14,7 @@ Iceberg on GCS read by BigQuery, Cortex AI, Streamlit apps, CI/CD on zero-copy c
 | 04 | [04_cortex_ai.sql](04_cortex_ai.sql) | Sentiment, classification, summaries, completion; dbt model for scores |
 | 05 | [05_streamlit_app/](05_streamlit_app/) | Streamlit in Snowflake: store manager app |
 | 06 | [06_devops_and_replication.sql](06_devops_and_replication.sql) | Blue/green SWAP, Git integration, failover groups |
-| CI | [../.github/workflows/dbt_ci.yml](../.github/workflows/dbt_ci.yml), [../ci/clone_env.py](../ci/clone_env.py) | PR → clone prod → dbt build modified+ → drop clone |
+| CI | [../../.github/workflows/dbt_ci.yml](../../.github/workflows/dbt_ci.yml), [../ci/clone_env.py](../ci/clone_env.py) | PR → clone prod → dbt build modified+ → drop clone |
 | — | [architecture_judgement.md](architecture_judgement.md) | Multi-account, cost attribution, tool choice, 100× volume |
 
 ---

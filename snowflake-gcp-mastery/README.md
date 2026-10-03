@@ -49,7 +49,7 @@ snowflake-gcp-mastery/
 ├── STANDARDS.md              ← data engineering standards used everywhere in this repo
 ├── requirements.txt          ← one Python environment for the whole course
 ├── .vscode/                  ← workspace settings (.sql = Snowflake SQL) + recommended extensions
-├── .github/workflows/        ← CI: dbt on a zero-copy clone per pull request (Stage 8)
+├── (../.github/workflows/)   ← CI lives at the Git repo root: dbt on a zero-copy clone per PR (Stage 8)
 ├── ci/                       ← helper scripts used by CI
 ├── 00_setup/                 ← accounts, installs, key-pair auth, connection checks
 ├── gcp/                      ← GCP track G1–G5 (gcloud scripts, Cloud Run job, BigQuery, Terraform)

@@ -12,8 +12,8 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "capstone_retail_platform/dbt_retail/**"
-      - "ci/**"
+      - "snowflake-gcp-mastery/capstone_retail_platform/dbt_retail/**"
+      - "snowflake-gcp-mastery/ci/**"
       - ".github/workflows/dbt_ci.yml"
 
 concurrency:
@@ -32,7 +32,7 @@ env:
   SNOWFLAKE_WAREHOUSE: TRANSFORM_WH
   DBT_CI_SUFFIX: PR_${{ github.event.pull_request.number }}
   DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
-  DBT_DIR: capstone_retail_platform/dbt_retail
+  DBT_DIR: snowflake-gcp-mastery/capstone_retail_platform/dbt_retail
 
 jobs:
   dbt-ci:
@@ -58,7 +58,7 @@ jobs:
           chmod 600 "$SNOWFLAKE_PRIVATE_KEY_PATH"
 
       - name: Create zero-copy clones of production
-        run: python ci/clone_env.py create --suffix "$DBT_CI_SUFFIX"
+        run: python snowflake-gcp-mastery/ci/clone_env.py create --suffix "$DBT_CI_SUFFIX"
 
       - name: Compile the production manifest from main (the "state" to compare against)
         run: |
@@ -87,7 +87,7 @@ jobs:
 
       - name: Drop the clones
         if: always()
-        run: python ci/clone_env.py drop --suffix "$DBT_CI_SUFFIX"
+        run: python snowflake-gcp-mastery/ci/clone_env.py drop --suffix "$DBT_CI_SUFFIX"
 
       - name: Remove the key file
         if: always()
