@@ -1,0 +1,20 @@
+version: 2
+
+seeds:
+  - name: channels
+    description: Marketing channel reference list (small, changes rarely → a seed in Git).
+    config:
+      column_types:
+        is_paid: boolean
+    columns:
+      - name: channel_code
+        data_tests: [unique, not_null]
+
+  - name: promotions
+    description: Promotion codes used at POS.
+    config:
+      column_types:
+        discount_pct: number(5,2)
+    columns:
+      - name: promo_code
+        data_tests: [unique, not_null]

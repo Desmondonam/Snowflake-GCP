@@ -1,0 +1,17 @@
+# Copy to terraform.tfvars (git-ignored) and fill in.
+project_id = "YOUR_PROJECT_ID"
+region     = "us-central1"
+
+# ORGNAME-ACCOUNTNAME → organization_name = ORGNAME, account_name = ACCOUNTNAME
+snowflake_organization_name = "ORGNAME"
+snowflake_account_name      = "ACCOUNTNAME"
+snowflake_user              = "DESMOND"
+snowflake_private_key_path  = "C:/Users/Admin/.snowflake/keys/desmond_rsa_key.p8"
+# Prefer an environment variable for the passphrase:  $env:TF_VAR_snowflake_private_key_passphrase = "..."
+# snowflake_private_key_passphrase = ""
+
+# Body of ~/.snowflake/keys/svc_retail_pipeline_rsa_key.pub without the BEGIN/END lines, on one line
+pipeline_public_key = "MIIBIjANBgkqh..."
+
+monthly_credit_quota = 30
+# ads_image = "us-central1-docker.pkg.dev/YOUR_PROJECT_ID/retail/ads-extract:latest"

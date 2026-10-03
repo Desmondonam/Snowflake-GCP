@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: erp
+    description: ERP reference data (products, stores) and daily inventory snapshots.
+    database: RETAIL_RAW
+    schema: ERP
+    loader: snowpipe
+    config:
+      loaded_at_field: _loaded_at
+    tables:
+      - name: products
+        identifier: PRODUCTS
+        description: Product master; full extract on day 1, then changed rows only.
+      - name: stores
+        identifier: STORES
+        description: Store master; changes rarely, so no freshness check.
+      - name: inventory
+        identifier: INVENTORY
+        config:
+          freshness:
+            warn_after: {count: 26, period: hour}
+            error_after: {count: 50, period: hour}

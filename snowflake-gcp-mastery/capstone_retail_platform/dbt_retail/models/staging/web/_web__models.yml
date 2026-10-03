@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: stg_web__events
+    description: One row per web event, typed. customer_email is NULL for anonymous visitors.
+    columns:
+      - name: event_id
+        data_tests: [unique, not_null]
+      - name: event_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['ad_click', 'email_open', 'page_view', 'purchase']

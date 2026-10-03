@@ -1,0 +1,6 @@
+promo_code,promo_name,promo_type,discount_pct
+PROMO10,10% off basket,basket,0.10
+WEEKEND15,Weekend 15%,basket,0.15
+LOYAL20,Loyalty members 20%,loyalty,0.20
+FLASH25,Flash sale 25%,flash,0.25
+NONE,No promotion,none,0.00

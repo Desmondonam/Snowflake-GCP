@@ -1,0 +1,51 @@
+# dbt connection profile. Safe to commit: every secret comes from environment variables (.env).
+# dbt looks for profiles.yml in the current folder first, so run dbt from this directory.
+#
+# Targets:
+#   dev  (default) → everything builds into RETAIL_DEV, schemas DBT_<you>_<layer>
+#   prod           → RETAIL_STAGING / RETAIL_MARTS with clean schema names (Airflow, final capstone)
+#   ci             → zero-copy clones RETAIL_STAGING_<suffix> / RETAIL_MARTS_<suffix> (GitHub Actions)
+#
+# Key-pair auth. If your key is NOT encrypted, delete the private_key_passphrase lines.
+
+dbt_retail:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'RETAIL_ENGINEER') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'TRANSFORM_WH') }}"
+      database: RETAIL_DEV
+      schema: "DBT_{{ env_var('DBT_DEV_SCHEMA_SUFFIX', 'dev') | upper }}"
+      threads: 8
+      query_tag: dbt_retail_dev
+
+    prod:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'RETAIL_ENGINEER') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'TRANSFORM_WH') }}"
+      database: RETAIL_MARTS
+      schema: MISC
+      threads: 8
+      query_tag: dbt_retail_prod
+
+    ci:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
+      private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'RETAIL_ENGINEER') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'TRANSFORM_WH') }}"
+      database: "RETAIL_MARTS_{{ env_var('DBT_CI_SUFFIX', 'LOCAL') }}"
+      schema: MISC
+      threads: 8
+      query_tag: dbt_retail_ci

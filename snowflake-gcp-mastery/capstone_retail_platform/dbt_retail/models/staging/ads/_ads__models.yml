@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: stg_ads__ad_performance
+    description: >
+      One row per ad per day. The extractor writes a new immutable file on every run, so the same
+      (ad_date, ad_id) can arrive several times; the latest load wins.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [ad_date, ad_id]
+    columns:
+      - name: platform
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['google', 'meta']
+      - name: spend
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+      - name: clicks
+        description: Must never exceed impressions.
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "<= impressions"

@@ -1,0 +1,11 @@
+# Astro CLI merges this file into its local docker-compose setup.
+# It mounts the dbt project (one folder up) into the containers that parse DAGs and run tasks,
+# so you edit dbt in one place and Airflow always runs the current version.
+# If `astro dev start` complains about a service name, run `astro dev ps` to see the names in your version.
+services:
+  scheduler:
+    volumes:
+      - ../dbt_retail:/usr/local/airflow/include/dbt_retail
+  dag-processor:
+    volumes:
+      - ../dbt_retail:/usr/local/airflow/include/dbt_retail

@@ -1,0 +1,7 @@
+channel_code,channel_name,channel_group,is_paid
+paid_search,Paid search,Paid media,true
+paid_social,Paid social,Paid media,true
+email,Email,Owned,false
+organic,Organic search,Earned,false
+direct,Direct,Earned,false
+unattributed,Unattributed,Unknown,false

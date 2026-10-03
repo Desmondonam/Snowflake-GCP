@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: int_customer_versions
+    description: SCD2 versions of CRM customers from the full change history (tracked segment, tier, city, country).
+    columns:
+      - name: customer_id
+        data_tests: [one_current_row]
+
+  - name: int_product_versions
+    description: SCD2 versions of products (tracked name, category, brand, cost, price).
+    columns:
+      - name: sku
+        data_tests: [one_current_row]
+
+  - name: int_customer_identity
+    description: Identity map — every known identifier (customer_id, loyalty_id, email) → one customer_id.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [identifier_type, identifier_value]
+    columns:
+      - name: customer_source
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['CRM', 'GUEST']
+
+  - name: int_sales_lines_unioned
+    description: Store + online sales lines in one shape with the resolved customer_id.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [sales_channel, transaction_id, line_no]
+
+  - name: int_touchpoints
+    description: Identified marketing touches (ad clicks, email opens, attributed page views).
+
+  - name: int_order_touchpoints
+    description: Online order × touchpoint within the attribution window; 'unattributed' when none.
+    columns:
+      - name: order_id
+        data_tests: [not_null]

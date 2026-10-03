@@ -1,0 +1,6 @@
+# Already included in the repo-root requirements.txt; listed here so the generator can run standalone.
+faker>=30
+pandas>=2.2
+pyarrow>=17
+python-dotenv>=1.0
+google-cloud-storage>=2.18

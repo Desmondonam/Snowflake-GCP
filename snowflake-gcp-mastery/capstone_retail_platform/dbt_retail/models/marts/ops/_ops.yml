@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: rpt_pos_reconciliation
+    description: >
+      Warehouse vs POS Z-report per store-day. status OK / MISMATCH / MISSING.
+      Used by Airflow to block publishing and alert when a store's numbers don't tie out.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [business_date, store_id]
+    columns:
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['OK', 'MISMATCH', 'MISSING']

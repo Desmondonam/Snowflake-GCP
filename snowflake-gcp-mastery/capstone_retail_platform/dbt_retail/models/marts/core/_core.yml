@@ -1,0 +1,113 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: Calendar 2024–2027. Qatar weekend is Fri–Sat, Kenya Sat–Sun.
+    columns:
+      - name: date_key
+        description: YYYYMMDD integer.
+        data_tests: [unique, not_null]
+
+  - name: dim_store
+    description: Stores (SCD1) plus one ONLINE member for web-shop sales.
+    columns:
+      - name: store_sk
+        data_tests: [unique, not_null]
+      - name: store_id
+        data_tests: [unique, not_null]
+
+  - name: dim_product
+    description: Product dimension, SCD Type 2 on name, category, brand, cost and price.
+    columns:
+      - name: product_sk
+        data_tests: [unique, not_null]
+      - name: sku
+        data_tests: [one_current_row]
+
+  - name: dim_customer
+    description: >
+      Conformed customer dimension across store and online. SCD Type 2 on segment, loyalty tier,
+      city and country; contact details are Type 1. Includes guest checkouts and an unknown member ('-1').
+    config:
+      contract: {enforced: true}
+    columns:
+      - name: customer_sk
+        data_type: varchar
+        description: Surrogate key of the customer VERSION (customer_id + valid_from).
+        constraints: [{type: not_null}]
+        data_tests: [unique]
+      - name: customer_id
+        data_type: varchar
+        description: CRM customer id, or G-<hash> for guests, or -1.
+        data_tests: [not_null, one_current_row]
+      - name: customer_source
+        data_type: varchar
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['CRM', 'GUEST', 'UNKNOWN']
+      - name: loyalty_id
+        data_type: varchar
+      - name: email
+        data_type: varchar
+        description: PII. Masked for everyone except marketing (tag-based masking, Stage 7).
+        config:
+          meta: {pii: email}
+      - name: phone
+        data_type: varchar
+        description: PII.
+        config:
+          meta: {pii: phone}
+      - name: first_name
+        data_type: varchar
+        config:
+          meta: {pii: name}
+      - name: last_name
+        data_type: varchar
+        config:
+          meta: {pii: name}
+      - name: birth_date
+        data_type: date
+        config:
+          meta: {pii: birth_date}
+      - name: city
+        data_type: varchar
+      - name: country_code
+        data_type: varchar
+      - name: segment
+        data_type: varchar
+      - name: loyalty_tier
+        data_type: varchar
+      - name: marketing_consent
+        data_type: boolean
+      - name: valid_from
+        data_type: timestamp_ntz
+      - name: valid_to
+        data_type: timestamp_ntz
+        description: Exclusive upper bound. Join facts with >= valid_from and < valid_to.
+      - name: is_current
+        data_type: boolean
+
+  - name: dim_campaign
+    description: Ad campaigns seen in ad-platform data, plus an unknown member for non-paid/email campaigns.
+    columns:
+      - name: campaign_sk
+        data_tests: [unique, not_null]
+
+  - name: dim_channel
+    description: Marketing channels (from seed).
+    columns:
+      - name: channel_sk
+        data_tests: [unique, not_null]
+
+  - name: dim_promotion
+    description: POS promotions (from seed). NONE = no promotion.
+    columns:
+      - name: promotion_sk
+        data_tests: [unique, not_null]
+
+  - name: product_review_scores
+    description: Cortex sentiment per review (Stage 8, disabled unless enable_cortex = true).
+    columns:
+      - name: review_id
+        data_tests: [unique, not_null]

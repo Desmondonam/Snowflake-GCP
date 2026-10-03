@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: ads
+    description: Daily ad performance from Google Ads and Meta (Cloud Run extractor / generator).
+    database: RETAIL_RAW
+    schema: ADS
+    loader: snowpipe
+    config:
+      loaded_at_field: _loaded_at
+      freshness:
+        warn_after: {count: 30, period: hour}
+        error_after: {count: 54, period: hour}
+    tables:
+      - name: ad_performance
+        identifier: AD_PERFORMANCE

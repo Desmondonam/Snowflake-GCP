@@ -1,0 +1,75 @@
+version: 2
+
+models:
+  - name: fct_ad_performance
+    description: Grain ad × day. Additive parts only (spend, impressions, clicks, conversions).
+    columns:
+      - name: ad_performance_key
+        data_tests: [unique, not_null]
+      - name: campaign_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_campaign')
+                field: campaign_sk
+
+  - name: fct_marketing_touchpoint
+    description: Grain one identified marketing touch.
+    columns:
+      - name: touchpoint_id
+        data_tests: [unique, not_null]
+
+  - name: fct_attribution_last_click
+    description: Last-click attribution (SQL).
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+
+  - name: fct_attribution_linear
+    description: Linear attribution (dbt Python model → Snowpark).
+
+  - name: fct_attribution_time_decay
+    description: Time-decay attribution (SQL window functions).
+
+  - name: fct_attribution
+    description: >
+      All attribution models; grain attribution_model × order × touchpoint.
+      Credits sum to 1 per order per model (tests/assert_attribution_credits_sum_to_one.sql).
+    columns:
+      - name: attribution_key
+        data_tests: [unique, not_null]
+      - name: attribution_model
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['last_click', 'linear', 'time_decay']
+
+  - name: rpt_roas_by_channel
+    description: Daily ROAS per channel / campaign / attribution model.
+
+  - name: aud_lapsed_high_value
+    description: Lapsed top-20% customers with marketing consent, for reverse ETL to ad platforms.
+    columns:
+      - name: customer_id
+        data_tests: [unique, not_null]
+      - name: email
+        config:
+          meta: {pii: email}
+      - name: phone
+        config:
+          meta: {pii: phone}
+
+unit_tests:
+  - name: last_click_gives_full_credit_to_latest_touch
+    description: Of two touches before an order, the later one gets 100% credit; orders without touches stay unattributed.
+    model: fct_attribution_last_click
+    given:
+      - input: ref('int_order_touchpoints')
+        rows:
+          - {order_id: O1, customer_id: C1, ordered_at: "2026-09-10 12:00:00", order_net: 100, touchpoint_id: E1, touched_at: "2026-09-09 10:00:00", channel: email, campaign_id: EMAIL-1, hours_before_order: 26}
+          - {order_id: O1, customer_id: C1, ordered_at: "2026-09-10 12:00:00", order_net: 100, touchpoint_id: E2, touched_at: "2026-09-10 09:00:00", channel: paid_search, campaign_id: GGL-001, hours_before_order: 3}
+          - {order_id: O2, customer_id: C2, ordered_at: "2026-09-10 13:00:00", order_net: 50, touchpoint_id: null, touched_at: null, channel: unattributed, campaign_id: null, hours_before_order: null}
+    expect:
+      rows:
+        - {order_id: O1, channel: paid_search, credit: 1, attributed_revenue: 100}
+        - {order_id: O2, channel: unattributed, credit: 1, attributed_revenue: 50}

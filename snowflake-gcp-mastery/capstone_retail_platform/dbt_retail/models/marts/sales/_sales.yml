@@ -1,0 +1,119 @@
+version: 2
+
+models:
+  - name: fct_sales_line
+    description: >
+      One row per sales line (store receipt line or online order line). Returns are negative lines.
+      Dimension keys point at the dimension VERSION valid at the time of sale.
+    config:
+      contract: {enforced: true}
+      meta:
+        owner: data-platform
+        sla: "ready by 06:00 store time"
+        # attached by the apply_governance post-hook once Stage 7 policies exist
+        row_access_policy: {name: GOV.POLICIES.RAP_STORE_REGION, column: store_region}
+    columns:
+      - name: sales_line_key
+        data_type: varchar
+        description: Surrogate key of the line (channel + transaction + line).
+        constraints: [{type: not_null}]
+        data_tests: [unique]
+      - name: sales_channel
+        data_type: varchar
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['STORE', 'ONLINE']
+      - name: transaction_id
+        data_type: varchar
+        description: Degenerate dimension (receipt number / order id).
+        data_tests: [not_null]
+      - name: line_no
+        data_type: number
+      - name: date_key
+        data_type: number
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: sale_date
+        data_type: date
+      - name: sold_at
+        data_type: timestamp_ntz
+      - name: store_sk
+        data_type: varchar
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_store')
+                field: store_sk
+      - name: store_id
+        data_type: varchar
+      - name: store_region
+        data_type: varchar
+        description: KE or QA. Drives the row access policy.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['KE', 'QA']
+      - name: product_sk
+        data_type: varchar
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_sk
+      - name: sku
+        data_type: varchar
+      - name: customer_sk
+        data_type: varchar
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_customer')
+                field: customer_sk
+              config:
+                severity: warn
+      - name: customer_id
+        data_type: varchar
+      - name: promotion_sk
+        data_type: varchar
+      - name: quantity
+        data_type: number(10,2)
+      - name: unit_price
+        data_type: number(12,2)
+      - name: gross_amount
+        data_type: number(14,2)
+      - name: discount_amount
+        data_type: number(14,2)
+      - name: net_amount
+        data_type: number(14,2)
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: -100000
+                max_value: 100000
+      - name: cost_amount
+        data_type: number(14,2)
+      - name: margin_amount
+        data_type: number(14,2)
+      - name: is_return
+        data_type: boolean
+      - name: _loaded_at
+        data_type: timestamp_ltz
+      - name: _dbt_updated_at
+        data_type: timestamp_ltz
+
+  - name: fct_inventory_daily
+    description: Periodic snapshot of stock per store × sku × day. closing_qty is semi-additive.
+    columns:
+      - name: inventory_key
+        data_tests: [unique, not_null]
+      - name: store_sk
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_store')
+                field: store_sk

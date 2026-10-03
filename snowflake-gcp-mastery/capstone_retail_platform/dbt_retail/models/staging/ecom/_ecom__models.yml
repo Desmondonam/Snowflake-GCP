@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_ecom__order_lines
+    description: Online order lines, one row per (order_id, order_line), emails normalised to lower case.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [order_id, order_line]
+    columns:
+      - name: order_status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['DELIVERED', 'SHIPPED', 'PLACED', 'CANCELLED', 'RETURNED']
+      - name: customer_email
+        data_tests: [not_null]
+      - name: delivery_method
+        description: Added by the source after ~60 days; NULL for older orders.
+
+  - name: stg_ecom__reviews
+    description: Product reviews, one row per review_id.
+    columns:
+      - name: review_id
+        data_tests: [unique, not_null]
+      - name: rating
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false

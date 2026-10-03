@@ -1,0 +1,67 @@
+name: dbt_retail
+version: "1.0.0"
+profile: dbt_retail
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+analysis-paths: ["analyses"]
+
+clean-targets: ["target", "dbt_packages", "logs"]
+
+vars:
+  # incremental models reprocess rows loaded in the last N days (late-arriving files, re-sends)
+  lookback_days: 3
+  # reconciliation: a store-day fails if the warehouse differs from the POS Z-report by more than this
+  reconciliation_tolerance: 0.005
+  # marketing touches that count toward an order happened within N days before it
+  attribution_window_days: 7
+  # half-life (hours) for time-decay attribution
+  time_decay_half_life_hours: 48
+  # turn on after Stage 7 creates GOV tags/policies: post-hooks tag PII columns and attach row access policies
+  enable_governance: false
+  # turn on in Stage 8: Cortex sentiment on reviews (costs AI credits)
+  enable_cortex: false
+
+models:
+  dbt_retail:
+    +query_tag: dbt_retail
+
+    staging:
+      +materialized: view
+      +database: RETAIL_STAGING
+      pos:  { +schema: pos }
+      ecom: { +schema: ecom }
+      crm:  { +schema: crm }
+      erp:  { +schema: erp }
+      ads:  { +schema: ads }
+      web:  { +schema: web }
+
+    intermediate:
+      +materialized: view
+      +database: RETAIL_STAGING
+      +schema: intermediate
+
+    marts:
+      +materialized: table
+      +database: RETAIL_MARTS
+      +transient: false          # marts are permanent: Time Travel + Fail-safe
+      +copy_grants: true         # keep grants (and future-grant results) when a table is rebuilt
+      +post-hook: "{{ apply_governance() }}"
+      core:      { +schema: core }
+      sales:     { +schema: sales }
+      marketing: { +schema: marketing }
+      ops:       { +schema: ops }
+
+seeds:
+  dbt_retail:
+    +database: RETAIL_STAGING
+    +schema: seeds
+
+snapshots:
+  dbt_retail:
+    +database: RETAIL_STAGING
+    +schema: snapshots
+    +transient: false            # snapshots hold irreplaceable history

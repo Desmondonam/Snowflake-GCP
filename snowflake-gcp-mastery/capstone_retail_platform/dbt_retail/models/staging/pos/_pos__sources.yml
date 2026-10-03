@@ -1,0 +1,26 @@
+version: 2
+
+sources:
+  - name: pos
+    description: Store point-of-sale files loaded by Snowpipe (stage_02 capstone).
+    database: RETAIL_RAW
+    schema: POS
+    loader: snowpipe
+    config:
+      loaded_at_field: _loaded_at
+      freshness:
+        warn_after: {count: 26, period: hour}
+        error_after: {count: 50, period: hour}
+    tables:
+      - name: sales_lines
+        identifier: SALES_LINES
+        description: One row per POS line item as delivered (duplicates possible when stores re-send files).
+        columns:
+          - name: transaction_id
+            data_tests: [not_null]
+          - name: line_no
+            data_tests: [not_null]
+
+      - name: control_totals
+        identifier: CONTROL_TOTALS
+        description: POS Z-report totals per store per business day. Source of truth for reconciliation.

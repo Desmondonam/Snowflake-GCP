@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: ecom
+    description: Web shop exports (Parquet orders, NDJSON reviews).
+    database: RETAIL_RAW
+    schema: ECOM
+    loader: snowpipe
+    config:
+      loaded_at_field: _loaded_at
+      freshness:
+        warn_after: {count: 26, period: hour}
+        error_after: {count: 50, period: hour}
+    tables:
+      - name: orders
+        identifier: ORDERS
+        description: Online order lines. Schema evolves (delivery_method added later).
+      - name: reviews
+        identifier: REVIEWS
+        description: Product reviews as VARIANT.

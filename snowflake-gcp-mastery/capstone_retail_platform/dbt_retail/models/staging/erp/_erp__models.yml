@@ -1,0 +1,34 @@
+version: 2
+
+models:
+  - name: stg_erp__product_changes
+    description: Every product change record (price, cost, naming). One row per (sku, updated_at).
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [sku, updated_at]
+    columns:
+      - name: list_price
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              arguments:
+                min_value: 0
+                strictly: true
+
+  - name: stg_erp__stores
+    description: Current store master, one row per store_id.
+    columns:
+      - name: store_id
+        data_tests: [unique, not_null]
+      - name: region
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['KE', 'QA']
+
+  - name: stg_erp__inventory
+    description: Opening stock per store × sku × day.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [snapshot_date, store_id, sku]

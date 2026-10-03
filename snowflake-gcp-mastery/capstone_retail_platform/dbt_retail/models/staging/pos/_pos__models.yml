@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: stg_pos__sales_lines
+    description: >
+      POS line items, typed and de-duplicated: one row per (transaction_id, line_no), keeping the most
+      recently loaded copy. Returns are negative quantities.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [transaction_id, line_no]
+    columns:
+      - name: transaction_id
+        description: T-<store>-<yyyymmdd>-<n>; prefix R- for returns.
+        data_tests: [not_null]
+      - name: store_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_erp__stores')
+                field: store_id
+              config:
+                severity: warn
+      - name: quantity
+        data_tests: [not_null]
+      - name: tender_type
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['CASH', 'CARD', 'MPESA', 'WALLET']
+
+  - name: stg_pos__control_totals
+    description: One row per business_date × store_id from the POS Z-report.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [business_date, store_id]

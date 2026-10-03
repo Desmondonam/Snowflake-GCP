@@ -1,0 +1,29 @@
+# dbt snapshots (YAML style, dbt >= 1.9).
+#
+# A snapshot records how a table looked EACH TIME you run `dbt snapshot`, building SCD2 history
+# (dbt_valid_from / dbt_valid_to) automatically. Use it when the source only gives you the
+# CURRENT state (no history). Compare with int_customer_versions, which rebuilds SCD2 from the
+# full change history we keep in RAW: that one can be rebuilt any time; a snapshot cannot
+# (it only knows what it saw when it ran), so snapshots are permanent tables — never drop them.
+#
+#   dbt snapshot                       # run after staging is built
+#   dbt build                          # also runs snapshots in DAG order
+
+snapshots:
+  - name: snap_crm__customers
+    relation: ref('stg_crm__customers')
+    description: Customer state as observed at each dbt snapshot run (timestamp strategy on updated_at).
+    config:
+      unique_key: customer_id
+      strategy: timestamp
+      updated_at: updated_at
+      dbt_valid_to_current: "to_timestamp_ntz('9999-12-31')"
+
+  - name: snap_erp__stores
+    relation: ref('stg_erp__stores')
+    description: Store master as observed at each run (check strategy — the source has no reliable updated_at).
+    config:
+      unique_key: store_id
+      strategy: check
+      check_cols: [store_name, city, region, size_sqm]
+      dbt_valid_to_current: "to_timestamp_ntz('9999-12-31')"

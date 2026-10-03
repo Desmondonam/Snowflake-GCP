@@ -1,0 +1,7 @@
+# Python packages for the Airflow image (Astro installs these at build time).
+# dbt itself is NOT here: it lives in its own virtualenv inside the image (see Dockerfile.additions),
+# so dbt's dependencies never conflict with Airflow's.
+apache-airflow-providers-snowflake
+apache-airflow-providers-common-sql
+astronomer-cosmos
+requests
