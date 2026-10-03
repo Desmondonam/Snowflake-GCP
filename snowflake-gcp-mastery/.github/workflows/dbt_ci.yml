@@ -1,0 +1,94 @@
+# CI for dbt_retail: every pull request builds ONLY the models it changed (plus everything downstream)
+# against a zero-copy clone of production, runs their tests, then drops the clone.
+#
+# Repository secrets needed (Settings → Secrets and variables → Actions):
+#   SNOWFLAKE_ACCOUNT                 ORGNAME-ACCOUNTNAME
+#   SNOWFLAKE_USER                    SVC_RETAIL_PIPELINE (a TYPE=SERVICE user with RETAIL_ENGINEER)
+#   SNOWFLAKE_PRIVATE_KEY             full contents of the .p8 private key file
+#   SNOWFLAKE_PRIVATE_KEY_PASSPHRASE  its passphrase
+name: dbt CI (zero-copy clone)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "capstone_retail_platform/dbt_retail/**"
+      - "ci/**"
+      - ".github/workflows/dbt_ci.yml"
+
+concurrency:
+  group: dbt-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+  SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+  SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: ${{ secrets.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE }}
+  SNOWFLAKE_PRIVATE_KEY_PATH: ${{ github.workspace }}/.ci_key.p8
+  SNOWFLAKE_ROLE: RETAIL_ENGINEER
+  SNOWFLAKE_WAREHOUSE: TRANSFORM_WH
+  DBT_CI_SUFFIX: PR_${{ github.event.pull_request.number }}
+  DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+  DBT_DIR: capstone_retail_platform/dbt_retail
+
+jobs:
+  dbt-ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # we need origin/main to compute what changed
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt and the Snowflake connector
+        run: pip install "dbt-core>=1.10.5,<2.0" "dbt-snowflake>=1.10,<2.0" "snowflake-connector-python>=3.12" cryptography
+
+      - name: Write the private key to a file
+        env:
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+        run: |
+          printf '%s\n' "$SNOWFLAKE_PRIVATE_KEY" > "$SNOWFLAKE_PRIVATE_KEY_PATH"
+          chmod 600 "$SNOWFLAKE_PRIVATE_KEY_PATH"
+
+      - name: Create zero-copy clones of production
+        run: python ci/clone_env.py create --suffix "$DBT_CI_SUFFIX"
+
+      - name: Compile the production manifest from main (the "state" to compare against)
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/prod_state"
+          git worktree add /tmp/main origin/main
+          if [ -f "/tmp/main/$DBT_DIR/dbt_project.yml" ]; then
+            cd "/tmp/main/$DBT_DIR"
+            dbt deps --quiet
+            dbt parse --target ci
+            cp target/manifest.json "$GITHUB_WORKSPACE/prod_state/manifest.json"
+            echo "HAS_STATE=true" >> "$GITHUB_ENV"
+          else
+            echo "No dbt project on main yet: CI will build everything."
+            echo "HAS_STATE=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: dbt build — modified models and their children, on the clone
+        working-directory: ${{ env.DBT_DIR }}
+        run: |
+          dbt deps --quiet
+          if [ "$HAS_STATE" = "true" ]; then
+            dbt build --target ci --select state:modified+ --state "$GITHUB_WORKSPACE/prod_state" --fail-fast
+          else
+            dbt build --target ci --fail-fast
+          fi
+
+      - name: Drop the clones
+        if: always()
+        run: python ci/clone_env.py drop --suffix "$DBT_CI_SUFFIX"
+
+      - name: Remove the key file
+        if: always()
+        run: rm -f "$SNOWFLAKE_PRIVATE_KEY_PATH"
