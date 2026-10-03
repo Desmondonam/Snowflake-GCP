@@ -1,0 +1,9 @@
+{
+  // Same file associations as snowflake-gcp-mastery/.vscode/settings.json, so they also apply
+  // when this parent folder is the open workspace: .sql = Snowflake SQL, dbt files = Jinja SQL.
+  "files.associations": {
+    "**/dbt_retail/**/*.sql": "jinja-sql",
+    "**/dbt_retail/**/*.yml": "jinja-yaml",
+    "*.sql": "snowflake-sql"
+  }
+}
